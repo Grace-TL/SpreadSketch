@@ -12,7 +12,7 @@ _INFOCOM 2020_
 - mrbmp.hpp, mrbmp.cpp: the implementation of multiresolution bitmap (distinct
   counters in SpreadSketch)
 - main\_ss.cpp: example about superspreader detection
-- p4/spreadsketch.p4: p4 implementation of SpreadSketch for 32-bit flow key
+- p4/spreadsketch.p4: p4 implementation of SpreadSketch
 ---
 
 ### Compile and Run the examples
