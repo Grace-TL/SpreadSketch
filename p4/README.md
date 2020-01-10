@@ -1,4 +1,4 @@
-# P4 implementation of MV-Sketch
+# P4 implementation of SpreadSketch
 
 
 ---
