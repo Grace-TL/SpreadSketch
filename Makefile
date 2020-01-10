@@ -2,7 +2,7 @@ all: $(EXEC)
 
 CFLAGS = -Wall -std=c++11 -O3 
 HEADER += hash.h datatypes.hpp util.h inputadaptor.hpp bitmap.h 
-SRC += hash.c inputadaptor.cpp  bitmap.c
+SRC += hash.c inputadaptor.cpp  bitmap.c spreadsketch.cpp
 SKETCHHEADER += spreadsketch.hpp mrbmp.hpp
 SKETCHSRC += mrbmp.cpp
 

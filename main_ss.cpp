@@ -14,10 +14,10 @@ int main(int argc, char* argv[]) {
     // buffer size
     unsigned long long buf_size = 500000000;
     // Superspreader threshold
-    double thresh = 0.0001;
+    double thresh = 0.001;
     // SpreadSketch parameters
     int lgn = 32;
-    int cmdepth = 6;
+    int cmdepth = 4;
     int cmwidth = 14096;
     int b = 79;
     int c = 3;
@@ -32,8 +32,10 @@ int main(int argc, char* argv[]) {
 
     // Result array
     double precision = 0, recall = 0, error = 0, throughput = 0, dtime = 0;
-
+    double avgpre = 0, avgrec = 0, avgerr = 0, avgthr = 0, avgdet = 0;
+    int epoch = 0;
     for (std::string file; getline(tracefiles, file);) {
+        epoch++;
         InputAdaptor* adaptor =  new InputAdaptor(file, buf_size);
         std::cout << "[Dataset]: " << file << std::endl;
         std::cout << "[Message] Finish read data." << std::endl;
@@ -89,22 +91,36 @@ int main(int argc, char* argv[]) {
                 }
             }
         }
-
+        std::cout << "[Message] Total " << cnt << " superspreaders, detect " << tp << std::endl;
         precision = tp*1.0/results.size();
         recall = tp*1.0/cnt;
         error = error/tp;
-        std::cout << "tp = " << tp << "      groundsize=" << ground.size() << "   dsize=" << results.size() << std::endl;
 
+        avgpre += precision; avgrec += recall; avgerr += error; avgthr += throughput; avgdet += dtime;
         delete sketch;
         delete adaptor;
+
+        //Output to standard output
         std::cout << std::setfill(' ');
-        std::cout << std::setw(20) << std::left << "Detector" << std::setw(60) << std::left << "Memory(KB)" << std::setw(20) << std::left << "Precision"
+        std::cout << std::setw(20) << std::left << "Memory(KB)" << std::setw(20) << std::left << "Precision"
             << std::setw(20) << std::left << "Recall" << std::setw(20)
             << std::left << "Error" << std::setw(20) << std::left << "Throughput" << std::setw(20)
             << std::left << "DTime" << std::endl;
-        std::cout << std::setw(20) << std::left << "SpreadSketch" << std::setw(60) << std::left << total_mem << std::setw(20) << std::left << precision << std::setw(20)
+        std::cout << std::setw(20) << std::left << total_mem << std::setw(20) << std::left << precision << std::setw(20)
             << std::left << recall << std::setw(20) << std::left << error << std::setw(20) << std::left << throughput << std::setw(20)
             << std::left << dtime << std::endl;
     }
+
+            //Output to standard output
+        std::cout << "---------------------------------  summary ---------------------------------" << std::endl;
+        std::cout << std::setfill(' ');
+        std::cout << std::setw(20) << std::left << "Memory(KB)" << std::setw(20) << std::left << "Precision"
+            << std::setw(20) << std::left << "Recall" << std::setw(20)
+            << std::left << "Error" << std::setw(20) << std::left << "Throughput" << std::setw(20)
+            << std::left << "DTime" << std::endl;
+        std::cout << std::setw(20) << std::left << total_mem << std::setw(20) << std::left << avgpre/epoch << std::setw(20)
+            << std::left << avgrec/epoch << std::setw(20) << std::left << avgerr/epoch << std::setw(20) << std::left << avgthr/epoch << std::setw(20)
+            << std::left << avgdet/epoch << std::endl;
+
 }
 
