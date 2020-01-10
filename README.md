@@ -1,4 +1,4 @@
-# MV-Sketch
+# SpreadSketch
 
 ---
 ### Paper
