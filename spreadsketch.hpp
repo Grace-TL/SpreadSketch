@@ -9,6 +9,7 @@
 #include <cmath>
 #include <iostream>
 #include <unordered_set>
+#include <fstream>
 extern "C"
 {
 #include "hash.h"
@@ -58,6 +59,8 @@ class DetectorSS {
 
         //# key bits
         int lgn;
+
+        int tdepth;
     };
 
 public:
@@ -82,7 +85,6 @@ public:
     key_tp** GetKey();
 
     int** GetLevel();
-
 
 private:
     //Update threshold
@@ -112,7 +114,7 @@ DetectorSS::DetectorSS(int depth, int width, int lgn, int b, int c, int memory) 
     ss_.depth = depth;
     ss_.width = width;
     ss_.lgn = lgn;
-
+    ss_.tdepth = depth > 4 ? 4 : depth;
     //init bitmap
     ss_.b = b;
     ss_.c = c;
@@ -209,7 +211,7 @@ void DetectorSS::Update(key_tp src, key_tp dst, val_tp weight) {
         pos += ss_.offsets[ss_.c-1];
     }
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < ss_.tdepth; i++) {
         bucket = (hashval[i] * (unsigned long)ss_.width) >> 32;
         if (ss_.level[i][bucket] < tmplevel) {
             ss_.level[i][bucket] = tmplevel;
@@ -281,7 +283,7 @@ int DetectorSS::PointQuery(uint32_t key) {
     MurmurHash3_x64_128 ( (unsigned char*)hkey, 12, ss_.hash[0], (unsigned char*)hashval);
     int ret=0;
     int degree=0;
-    for (int i=0; i<4; i++) {
+    for (int i=0; i<ss_.tdepth; i++) {
         unsigned bucket = (uint32_t )hashval[i] * (unsigned long)ss_.width >> 32;
         if (i==0) {
             ret = Estimate(bucket, ss_.counts[i]);
@@ -355,7 +357,7 @@ int DetectorSS::PointQueryMerge(uint32_t key) {
     uint32_t hkey[3] = {key, key, key};
     uint32_t hashval[4] = {0};
     MurmurHash3_x64_128 ( (unsigned char*)hkey, 12, ss_.hash[0], (unsigned char*)hashval);
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < ss_.tdepth; i++) {
         unsigned bucket = (uint32_t )hashval[i] * (unsigned long)ss_.width >> 32;
         if (i == 0) {
             Copybmp(mcount, ss_.counts[i], bucket*ss_.offsets[ss_.c], ss_.offsets[ss_.c]);
@@ -377,14 +379,14 @@ void DetectorSS::Query(val_tp thresh, std::vector<std::pair<key_tp, val_tp> > &r
     std::unordered_set<key_tp> reset;
     for (int i = 0; i < ss_.depth; i++) {
         for (int j = 0; j < ss_.width; j++) {
-            if (Estimate(j, ss_.counts[i]) >= thresh) {
+            int est = Estimate(j, ss_.counts[i]);
+            if ( est >= thresh) {
                 reset.insert(ss_.skey[i][j]);
             }
         }
     }
 
     for (auto it = reset.begin(); it != reset.end(); it++) {
-        //val_tp degree = PointQuery(*it);
         val_tp degree = PointQueryMerge(*it);
         if ( degree >= thresh) {
             std::pair<key_tp, val_tp> node;
@@ -444,6 +446,7 @@ void DetectorSS::Merge(DetectorSS *detector) {
         }
     }
 }
+
 
 #endif
 

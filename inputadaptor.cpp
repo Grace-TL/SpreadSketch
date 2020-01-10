@@ -30,12 +30,11 @@ InputAdaptor::InputAdaptor(std::string filename, uint64_t buffersize) {
     struct pcap_pkthdr hdr;
     struct ip* ip_hdr;
     while ((rawpkt = pcap_next(pfile, &hdr)) != NULL) {
-
         int status = 1;
         int eth_len = ETH_LEN;
-        //error checking (Ethernet level)
+        // error checking (Ethernet level)
         if (eth_len == 14) {
-            struct ether_header* eth_hdr = (struct ether_header*) rawpkt;
+            struct ether_header* eth_hdr = (struct ether_header*)rawpkt;
             if (ntohs(eth_hdr->ether_type) == ETHERTYPE_VLAN) {
                 eth_len = 18;
             }
@@ -48,15 +47,10 @@ InputAdaptor::InputAdaptor(std::string filename, uint64_t buffersize) {
                 status = -1;
             }
         }
-        else if (eth_len == 4) {
-            if (ntohs(*(uint16_t*)(rawpkt + 2)) != ETH_P_IP) {
-                status = -1;
-            }
-        }
         else if (eth_len != 0) {
+            // unkown ethernet header length
             status = -1;
         }
-
         int pkt_len = (hdr.caplen < MAX_CAPLEN) ? hdr.caplen : MAX_CAPLEN;
         uint32_t len = pkt_len - eth_len;
         // error checking (IP level)
@@ -94,28 +88,28 @@ InputAdaptor::InputAdaptor(std::string filename, uint64_t buffersize) {
             }
         }
 
-        //if (status == 1) {
-        //    uint16_t srcport, dstport, iplen;
-        //    iplen = ntohs(ip_hdr->ip_len);
-        //    if (ip_hdr->ip_p == IPPROTO_TCP) {
-        //        // TCP
-        //        tcp_hdr = (struct tcphdr*)((uint8_t*)ip_hdr + (ip_hdr->ip_hl << 2));
-        //        srcport = ntohs(tcp_hdr->source);
-        //        dstport = ntohs(tcp_hdr->dest);
-        //    }
-        //    else if (ip_hdr->ip_p == IPPROTO_UDP) {
-        //        // UDP
-        //        struct udphdr* udp_hdr = (struct udphdr*)((uint8_t*)ip_hdr + (ip_hdr->ip_hl << 2));
-        //        srcport = ntohs(udp_hdr->source);
-        //        dstport = ntohs(udp_hdr->dest);
-        //    } else {
-        //        // Other L4
-        //        srcport = 0;
-        //        dstport = 0;
-        //    }
-        //}
+        if (status == 1) {
+            uint16_t srcport, dstport, iplen;
+            iplen = ntohs(ip_hdr->ip_len);
+            if (ip_hdr->ip_p == IPPROTO_TCP) {
+                // TCP
+                tcp_hdr = (struct tcphdr*)((uint8_t*)ip_hdr + (ip_hdr->ip_hl << 2));
+                srcport = ntohs(tcp_hdr->source);
+                dstport = ntohs(tcp_hdr->dest);
+            }
+            else if (ip_hdr->ip_p == IPPROTO_UDP) {
+                // UDP
+                struct udphdr* udp_hdr = (struct udphdr*)((uint8_t*)ip_hdr + (ip_hdr->ip_hl << 2));
+                srcport = ntohs(udp_hdr->source);
+                dstport = ntohs(udp_hdr->dest);
+            } else {
+                // Other L4
+                srcport = 0;
+                dstport = 0;
+            }
+        }
 
-        //uint8_t protocol = (uint8_t)ntohs(ip_hdr->ip_p);
+        uint8_t protocol = (uint8_t)ntohs(ip_hdr->ip_p);
         int srcip = ntohl(ip_hdr->ip_src.s_addr);
         int dstip = ntohl(ip_hdr->ip_dst.s_addr);
         if (p+sizeof(edge_tp) < data->databuffer + buffersize) {
