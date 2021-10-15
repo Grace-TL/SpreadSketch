@@ -20,7 +20,7 @@ typedef struct edge_t_s {
 /**
  * Object for hash
  */
-typedef struct {
+typedef struct edge_tp_hash {
     /// overloaded operation
     long operator() (const edge_tp &k) const { return MurmurHash64A(&k, 8, 388650253); }
 } edge_tp_hash;
@@ -29,7 +29,7 @@ typedef struct {
 /**
  * Object for equality
  */
-typedef struct {
+typedef struct edge_tp_eq {
     /// overloaded operation
     bool operator() (const edge_tp &x, const edge_tp &y) const {
         return memcmp(&x, &y, 8)==0;

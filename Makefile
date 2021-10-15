@@ -6,10 +6,18 @@ SRC += hash.c inputadaptor.cpp  bitmap.c spreadsketch.cpp
 SKETCHHEADER += spreadsketch.hpp mrbmp.hpp
 SKETCHSRC += mrbmp.cpp
 
-LIBS= -lpcap -lrt -lm
+HPSKETCHHEADER += spreadsketch_HP.hpp mrbmp.hpp
+
+
+LIBS= -lpcap -lm
 
 main_ss: main_ss.cpp $(SRC) $(HEADER) $(SKETCHHEADER)   
 	g++ $(CFLAGS) $(INCLUDES) -o $@ $< $(SKETCHSRC) $(SRC) $(LIBS)
+
+main_hpss: main_hpss.cpp $(SRC) $(HEADER) $(HPSKETCHHEADER)   
+	g++ $(CFLAGS) -DHH $(INCLUDES) -o $@ $< $(SKETCHSRC) $(SRC) $(LIBS)
+
+
 
 clean:
 	rm -rf $(EXEC)

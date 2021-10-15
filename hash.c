@@ -19,18 +19,6 @@ uint64_t AwareHash(unsigned char* data, uint64_t n,
 	return hash ^ hardener;
 }
 
-uint64_t AwareHash_debug(unsigned char* data, uint64_t n,
-        uint64_t hash, uint64_t scale, uint64_t hardener) {
-
-	while (n) {
-        fprintf(stderr, "    %lu %lu %lu %u\n", n, hash, scale, *data);
-		hash *= scale;
-		hash += *data++;
-		n--;
-        fprintf(stderr, "        internal %lu\n", hash);
-	}
-	return hash ^ hardener;
-}
 
 /*
  *mangle 32 bits each time, and concat the results
@@ -68,11 +56,7 @@ void mangle(const unsigned char* key, unsigned char* ret_key,
 
 uint64_t seed = 0;
 uint64_t GenHashSeed(uint64_t index) {
-    /*
-    if (index == 0) {
-        srand(0);
-    }
-    */
+
     if (seed == 0) {
         seed = rand();
     }

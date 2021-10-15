@@ -9,7 +9,7 @@
 class InputAdaptor {
 
 
-    typedef struct {
+    typedef struct adaptor_t {
         unsigned char* databuffer;
         unsigned long* timestamp;
         uint64_t cnt=0;
