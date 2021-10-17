@@ -1,5 +1,64 @@
 #include "spreadsketch.hpp"
 
+#ifdef HH
+DetectorSS::DetectorSS(int depth, int width, int lgn, int b, int c, int memory, int len, unsigned mask) {
+    ss_.depth = depth;
+    ss_.width = width;
+    ss_.lgn = lgn;
+    ss_.tdepth = depth > 4 ? 4 : depth;
+
+    //init bitmap
+    ss_.b = b;
+    ss_.c = c;
+    ss_.lastb=(memory>0?memory-(c-1)*b:b*2);
+    if (ss_.lastb < b*2) {
+        std::cout << "Not enough memory for last component: b=" << b << "  c=" << c
+            << "   mem=" << memory << std::endl;
+        exit(-1);
+    }
+    if (log(b)+log(2)*c>=32*log(2)) {
+        std::cout << "Multiresolition bitmap too fine for 32 bit hash: b=" << b << "  c="
+            << c << std::endl;
+        exit(-1);
+    }
+    if(log(b)+log(2)*c>27*log(2)){
+        std::cout << "Unsafe DiscounterMRB for a 32 bit hash: b="<< b << "  c="
+            << c << std::endl;
+        exit(-1);
+    }
+
+    ss_.setmax = (int)(b*bitsetratio+0.5);
+    ss_.offsets = new int[c+1]();
+    for(int i=0;i<c;i++){ss_.offsets[i]=i*b;}
+    ss_.offsets[c] = ss_.offsets[c-1]+ss_.lastb;
+    ss_.counts = new unsigned char*[ss_.depth]();
+    for (int i = 0; i < ss_.depth; i++) {
+        int size = (ss_.offsets[c] + 7) >> 3;
+        ss_.counts[i] = new unsigned char[size*ss_.width]();
+    }
+
+    //init SSketch
+    ss_.skey = new key_tp*[depth];
+    ss_.level = new int*[depth];
+    for (int i = 0; i < depth; i++) {
+        ss_.skey[i] = new key_tp[width]();
+        ss_.level[i] = new int[width]();
+    }
+    ss_.hash = new unsigned long[depth];
+    char name[] = "DetectorSS";
+    unsigned long seed = AwareHash((unsigned char*)name, strlen(name), 13091204281, 228204732751, 6620830889);
+    for (int i = 0; i < depth; i++) {
+        ss_.hash[i] = GenHashSeed(seed++);
+    }
+    ss_.len = len;
+    ss_.mask = mask;
+    //init HH
+    ss_.key = new unsigned long[ss_.len]();
+    ss_.indicator = new int[ss_.len]();
+}
+
+#else
+
 DetectorSS::DetectorSS(int depth, int width, int lgn, int b, int c, int memory) {
     ss_.depth = depth;
     ss_.width = width;
@@ -49,6 +108,7 @@ DetectorSS::DetectorSS(int depth, int width, int lgn, int b, int c, int memory) 
         ss_.hash[i] = GenHashSeed(seed++);
     }
 }
+#endif
 
 DetectorSS::~DetectorSS() {
     delete [] ss_.hash;
@@ -61,6 +121,10 @@ DetectorSS::~DetectorSS() {
     delete [] ss_.counts;
     delete [] ss_.skey;
     delete [] ss_.level;
+#ifdef HH
+    delete [] ss_.key;
+    delete [] ss_.indicator;
+#endif
 }
 
 //right most zero
@@ -87,6 +151,20 @@ void DetectorSS::Update(key_tp src, key_tp dst, val_tp weight) {
     int tmplevel = 0;
     //Update sketch
     unsigned long p = MurmurHash64A((unsigned char*)(&edge), ss_.lgn/8*2, ss_.hash[0]);
+#ifdef HH
+    //check if HH
+    int index = p & ss_.mask;
+    if (ss_.key[index] == edge) {
+        ss_.indicator[index]++;
+        return;
+    } else {
+        ss_.indicator[index]--;
+        if (ss_.indicator[index] < 0) {
+            ss_.key[index] = edge;
+            ss_.indicator[index] = 1;
+        }
+    }
+#endif
     tmplevel = loghash(p);
     unsigned bucket = 0;
     uint32_t key[3] = {src, src, src};
@@ -141,7 +219,6 @@ int DetectorSS::Estimate(int bucket, unsigned char* bmp){
   }
   m=0;
 
-  /******************** Add by TANG LU ******************************/
   int pos = base-1;
   for(int i=base; i<ss_.c-1; i++){
     tmpoff = offs + ss_.offsets[i];
@@ -153,12 +230,10 @@ int DetectorSS::Estimate(int bucket, unsigned char* bmp){
     }
   }
   factor=factor*(1 << (pos-base+1));
-  /******************************************************************/
+  
   tmpoff = offs + ss_.offsets[ss_.c-1];
   z=countzerobits(bmp, tmpoff, tmpoff+ss_.lastb);
   if(z==0){
-    //return -1; // Finest component totally full
-    //Add by TANG LU
     m+=ss_.lastb*(log(ss_.lastb));
   } else {
     m+=ss_.lastb*(log(ss_.lastb)-log(z));
@@ -166,7 +241,6 @@ int DetectorSS::Estimate(int bucket, unsigned char* bmp){
   return (int)(factor*m+0.5);
 }
 
-//TODO add it to header file
 int DetectorSS::PointQuery(uint32_t key) {
     uint32_t hkey[3] = {key, key, key};
     uint32_t hashval[4] = {0};
@@ -260,7 +334,7 @@ int DetectorSS::PointQueryMerge(uint32_t key) {
         Intersec(mcount, ss_.counts[i], bucket*ss_.offsets[ss_.c], ss_.offsets[ss_.c]);
     }
     ret = Estimate(0, mcount);
-    delete mcount;
+    delete [] mcount;
     return ret;
 }
 
@@ -336,5 +410,3 @@ void DetectorSS::Merge(DetectorSS *detector) {
         }
     }
 }
-
-

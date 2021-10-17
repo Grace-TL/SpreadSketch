@@ -61,10 +61,24 @@ class DetectorSS {
         int lgn;
 
         int tdepth;
+
+#ifdef HH
+        /**************** parameters for HH ******************/
+        unsigned long *key;
+        int *indicator;
+        int len;
+        unsigned mask;
+#endif
+
+
     };
 
 public:
+#ifdef HH
+    DetectorSS(int depth, int width, int lgn, int b, int c, int memory, int len, unsigned mask);
+#else
     DetectorSS(int depth, int width, int lgn, int b, int c, int memory);
+#endif
 
     ~DetectorSS();
 
@@ -87,8 +101,6 @@ public:
     int** GetLevel();
 
 private:
-    //Update threshold
-    double thresh_;
 
     //Sketch data structure
     CSS_type ss_;

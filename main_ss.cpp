@@ -29,6 +29,18 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+#ifdef HH
+    //number of filter units in HP-Filter
+    int len = 2048;
+    unsigned mask = 0;
+    if (len && (!(len & (len-1))) != 0) {
+        mask = (unsigned)(len-1);
+    } else {
+        std::cout << "[Error] len should be power of 2" << std::endl;
+        return -1;
+    }
+#endif
+
 
     // Result array
     double precision = 0, recall = 0, error = 0, throughput = 0, dtime = 0;
@@ -55,7 +67,11 @@ int main(int argc, char* argv[]) {
         std::cout << "[Message] Total distinct paris: " << sum.size() << "  threshold=" << threshold<< std::endl;
 
         // Create sketch
+#ifdef HH
+        DetectorSS *sketch = new DetectorSS(cmdepth, cmwidth, lgn, b, c, memory, len, mask);
+#else
         DetectorSS *sketch = new DetectorSS(cmdepth, cmwidth, lgn, b, c, memory);
+#endif
 
         // Update sketch
         double t1=0, t2=0;
