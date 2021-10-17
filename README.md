@@ -36,9 +36,14 @@ Ubuntu with g++ and make.
 
 #### Compile
 - Compile examples with make
-
+    - Run the example of SpreadSketch 
 ```
     $ make main_ss
+```
+    - Run the example of HP-SpreadSketch
+
+```
+    $ make main_ss_hp
 ```
 
 #### Run
