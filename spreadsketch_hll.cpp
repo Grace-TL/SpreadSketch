@@ -98,7 +98,7 @@ int DetectorSSHLL::Estimate(int row, int bucket){
         res += 1.0/((unsigned long)1 << ss_.counts[row][pos+i]);
         zeros = ss_.counts[row][pos+i] == 0 ? zeros+1 : zeros;
     }
-    if (zeros > ss_.setmax) return ss_.m*log(ss_.m/zeros);
+    if (zeros > ss_.setmax) return ss_.m*log(ss_.m*1.0/zeros);
     return (int)(ss_.alpha/res);
 }
 

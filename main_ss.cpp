@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
                 int truth = (int) it->second.size();
                 for (auto res = results.begin(); res != results.end(); res++) {
                     if (res->first == it->first) {
-                        error = abs((int)res->second - truth)*1.0/truth;
+                        error += abs((int)res->second - truth)*1.0/truth;
                         tp++;
                     }
                 }
