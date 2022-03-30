@@ -9,10 +9,12 @@ _INFOCOM 2020_
 ---
 ### Files
 - spreadsketch.hpp, spreadsketch.cpp: the implementation of SpreadSketch
-- mrbmp.hpp, mrbmp.cpp: the implementation of multiresolution bitmap (distinct
-  counters in SpreadSketch)
 - main\_ss.cpp: example about superspreader detection
+- spreadsketch\_lc.hpp spreadsketch\_lc.cpp: SpreadSketch with Linear Counting
+- spreadsketch\_hll.hpp spreadsketch\_hll.cpp: SpreadSketch with HyperLogLog
+- spreadsketch\_kmv.hpp spreadsketch\_kmv.cpp: SpreadSketch with K-Minimal Values 
 - p4/spreadsketch.p4: p4 implementation of SpreadSketch
+- P4/hp\_spreadsketch.p4: p4 implementation of HP-SpreadSketch
 ---
 
 ### Compile and Run the examples
@@ -55,6 +57,27 @@ $ ./main_ss
 
 - Note that you can change the configuration of SpreadSketch, e.g. number of rows and buckets in the example source code for testing.
 
+#### Other distinct counter
+- Run SpreadSketch with linear counting
+
+```
+$ make main_lc
+$ ./main_lc
+```
+
+- Run SpreadSketch with hyperloglog
+
+```
+$ make main_hll
+$ ./main_hll
+```
+
+- Run SpreadSketch with KMV
+
+```
+$ make main_kmv
+$ ./main_kmv
+```
 
 
 
